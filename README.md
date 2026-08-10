@@ -41,7 +41,7 @@ This project also demonstrates how **ER modeling, strong/weak entities, relation
 
 - **Database:** MySQL
 - **Language:** SQL
-- **Concepts:** DBMS, ER Diagram, Chen Notation, Primary Key, Foreign Key, Self-Referencing Foreign Key, Normalization, Joins, Aggregate Functions, Subqueries, CTE, Window Functions, Views, DML and Transactions
+- **Concepts:** DBMS, ER Diagram, Primary Key, Foreign Key, Self-Referencing Foreign Key, Normalization, Joins, Aggregate Functions, Subqueries, , Window Functions, Views, DML and Transactions
 
 ---
 
