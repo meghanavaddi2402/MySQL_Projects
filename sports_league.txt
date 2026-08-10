@@ -1,0 +1,841 @@
+mysql> -- ============================================================
+mysql> -- Local Sports League Manager
+mysql> -- Database: SportsLeagueDB
+mysql> -- ============================================================
+mysql> 
+mysql> DROP DATABASE IF EXISTS SportsLeagueDB;
+Query OK, 0 rows affected, 1 warning (0.01 sec)
+
+mysql> CREATE DATABASE SportsLeagueDB;
+Query OK, 1 row affected (0.01 sec)
+
+mysql> USE SportsLeagueDB;
+Database changed
+mysql> 
+mysql> -- ============================================================
+mysql> -- TABLE CREATION
+mysql> -- ============================================================
+mysql> 
+mysql> CREATE TABLE Team (
+    ->     TeamID       INT PRIMARY KEY AUTO_INCREMENT,
+    ->     TeamName     VARCHAR(50) NOT NULL,
+    ->     City         VARCHAR(50),
+    ->     CoachName    VARCHAR(50),
+    ->     FoundedYear  INT
+    -> );
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> 
+mysql> CREATE TABLE Player (
+    ->     PlayerID     INT PRIMARY KEY AUTO_INCREMENT,
+    ->     FirstName    VARCHAR(30) NOT NULL,
+    ->     LastName     VARCHAR(30) NOT NULL,
+    ->     DOB          DATE,
+    ->     Position     VARCHAR(20),
+    ->     JerseyNumber INT,
+    ->     TeamID       INT,
+    ->     FOREIGN KEY (TeamID) REFERENCES Team(TeamID) ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.07 sec)
+
+mysql> 
+mysql> CREATE TABLE PlayerPhone (
+    ->     PlayerID     INT,
+    ->     PhoneNumber  VARCHAR(15),
+    ->     PRIMARY KEY (PlayerID, PhoneNumber),
+    ->     FOREIGN KEY (PlayerID) REFERENCES Player(PlayerID) ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.09 sec)
+
+mysql> 
+mysql> CREATE TABLE Venue (
+    ->     VenueID      INT PRIMARY KEY AUTO_INCREMENT,
+    ->     VenueName    VARCHAR(50) NOT NULL,
+    ->     City         VARCHAR(50),
+    ->     Capacity     INT
+    -> );
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> 
+mysql> CREATE TABLE Referee (
+    ->     RefereeID       INT PRIMARY KEY AUTO_INCREMENT,
+    ->     FirstName       VARCHAR(30),
+    ->     LastName        VARCHAR(30),
+    ->     Phone           VARCHAR(15),
+    ->     YearsExperience INT
+    -> );
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> 
+mysql> -- Note: table named Match_ because MATCH is a reserved word in MySQL
+mysql> CREATE TABLE Match_ (
+    ->     MatchID     INT PRIMARY KEY AUTO_INCREMENT,
+    ->     HomeTeamID  INT,
+    ->     AwayTeamID  INT,
+    ->     VenueID     INT,
+    ->     RefereeID   INT,
+    ->     MatchDate   DATE,
+    ->     MatchTime   TIME,
+    ->     HomeScore   INT DEFAULT 0,
+    ->     AwayScore   INT DEFAULT 0,
+    ->     Status      ENUM('Scheduled','Live','Completed','Postponed','Cancelled') DEFAULT 'Scheduled',
+    ->     FOREIGN KEY (HomeTeamID) REFERENCES Team(TeamID),
+    ->     FOREIGN KEY (AwayTeamID) REFERENCES Team(TeamID),
+    ->     FOREIGN KEY (VenueID) REFERENCES Venue(VenueID),
+    ->     FOREIGN KEY (RefereeID) REFERENCES Referee(RefereeID)
+    -> );
+Query OK, 0 rows affected (0.05 sec)
+
+mysql> 
+mysql> CREATE TABLE PlayerMatchStats (
+    ->     MatchID       INT,
+    ->     PlayerID      INT,
+    ->     Goals         INT DEFAULT 0,
+    ->     Assists       INT DEFAULT 0,
+    ->     YellowCards   INT DEFAULT 0,
+    ->     RedCards      INT DEFAULT 0,
+    ->     MinutesPlayed INT DEFAULT 0,
+    ->     PRIMARY KEY (MatchID, PlayerID),
+    ->     FOREIGN KEY (MatchID) REFERENCES Match_(MatchID) ON DELETE CASCADE,
+    ->     FOREIGN KEY (PlayerID) REFERENCES Player(PlayerID) ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> 
+mysql> CREATE TABLE TeamSponsor (
+    ->     SponsorID     INT PRIMARY KEY AUTO_INCREMENT,
+    ->     TeamID        INT,
+    ->     SponsorName   VARCHAR(50),
+    ->     Amount        DECIMAL(10,2),
+    ->     PaymentMode   ENUM('Bank Transfer','Cheque','UPI','Cash'),
+    ->     PaymentStatus ENUM('Pending','Paid','Overdue') DEFAULT 'Pending',
+    ->     PaymentDate   DATE,
+    ->     FOREIGN KEY (TeamID) REFERENCES Team(TeamID) ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.04 sec)
+
+mysql> 
+mysql> CREATE TABLE Feedback (
+    ->     FeedbackID   INT PRIMARY KEY AUTO_INCREMENT,
+    ->     MatchID      INT,
+    ->     FanName      VARCHAR(50),
+    ->     Rating       INT CHECK (Rating BETWEEN 1 AND 5),
+    ->     Comments     VARCHAR(255),
+    ->     FeedbackDate DATE,
+    ->     FOREIGN KEY (MatchID) REFERENCES Match_(MatchID) ON DELETE CASCADE
+    -> );
+Query OK, 0 rows affected (0.03 sec)
+
+mysql> 
+mysql> -- ============================================================
+mysql> -- SAMPLE DATA
+mysql> -- ============================================================
+mysql> 
+mysql> -- Teams
+mysql> INSERT INTO Team (TeamName, City, CoachName, FoundedYear) VALUES
+    -> ('Riverside FC', 'Riverside', 'Daniel Cooper', 2005),
+    -> ('Northside United', 'Northside', 'Maria Gomez', 2001),
+    -> ('Eastwood Rangers', 'Eastwood', 'James Patel', 2010),
+    -> ('Harborview Athletic', 'Harborview', 'Lisa Chen', 1998),
+    -> ('Summit City FC', 'Summit City', 'Robert King', 2008),
+    -> ('Westgate Warriors', 'Westgate', 'Priya Nair', 2012);
+Query OK, 6 rows affected (0.01 sec)
+Records: 6  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Venues
+mysql> INSERT INTO Venue (VenueName, City, Capacity) VALUES
+    -> ('Riverside Grounds', 'Riverside', 8000),
+    -> ('Central Stadium', 'Northside', 15000),
+    -> ('Eastwood Community Park', 'Eastwood', 5000);
+Query OK, 3 rows affected (0.01 sec)
+Records: 3  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Referees
+mysql> INSERT INTO Referee (FirstName, LastName, Phone, YearsExperience) VALUES
+    -> ('Alan', 'Brooks', '9990001111', 12),
+    -> ('Sofia', 'Martinez', '9990002222', 8),
+    -> ('Ethan', 'Wright', '9990003333', 15),
+    -> ('Nina', 'Rao', '9990004444', 5);
+Query OK, 4 rows affected (0.01 sec)
+Records: 4  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Players (5 per team, 30 total)
+mysql> INSERT INTO Player (FirstName, LastName, DOB, Position, JerseyNumber, TeamID) VALUES
+    -> -- Riverside FC (TeamID 1)
+    -> ('Liam', 'Turner', '1998-03-12', 'Goalkeeper', 1, 1),
+    -> ('Noah', 'Bennett', '1997-06-21', 'Defender', 4, 1),
+    -> ('Oliver', 'Reed', '1999-01-15', 'Midfielder', 8, 1),
+    -> ('Ethan', 'Hayes', '1996-11-02', 'Forward', 9, 1),
+    -> ('Lucas', 'Ford', '2000-05-30', 'Defender', 5, 1),
+    -> -- Northside United (TeamID 2)
+    -> ('Mason', 'Ellis', '1998-02-18', 'Goalkeeper', 1, 2),
+    -> ('Logan', 'Hughes', '1997-09-09', 'Defender', 3, 2),
+    -> ('Elijah', 'Foster', '1999-07-14', 'Midfielder', 10, 2),
+    -> ('James', 'Powell', '1996-12-25', 'Forward', 11, 2),
+    -> ('Benjamin', 'Long', '2000-04-04', 'Midfielder', 7, 2),
+    -> -- Eastwood Rangers (TeamID 3)
+    -> ('William', 'Sanders', '1998-08-19', 'Goalkeeper', 1, 3),
+    -> ('Henry', 'Price', '1997-03-27', 'Defender', 2, 3),
+    -> ('Alexander', 'Bell', '1999-10-11', 'Midfielder', 6, 3),
+    -> ('Michael', 'Ross', '1996-01-05', 'Forward', 9, 3),
+    -> ('Daniel', 'Cole', '2000-06-17', 'Defender', 4, 3),
+    -> -- Harborview Athletic (TeamID 4)
+    -> ('Matthew', 'Grant', '1998-05-23', 'Goalkeeper', 1, 4),
+    -> ('Jack', 'Fisher', '1997-11-30', 'Defender', 5, 4),
+    -> ('Owen', 'Simmons', '1999-02-08', 'Midfielder', 8, 4),
+    -> ('Samuel', 'Warren', '1996-09-14', 'Forward', 10, 4),
+    -> ('David', 'Hunt', '2000-03-21', 'Midfielder', 7, 4),
+    -> -- Summit City FC (TeamID 5)
+    -> ('Joseph', 'Perry', '1998-07-02', 'Goalkeeper', 1, 5),
+    -> ('Carter', 'Wells', '1997-04-16', 'Defender', 3, 5),
+    -> ('Wyatt', 'Stone', '1999-12-29', 'Midfielder', 6, 5),
+    -> ('Julian', 'Hart', '1996-08-08', 'Forward', 9, 5),
+    -> ('Gabriel', 'Dean', '2000-01-27', 'Defender', 2, 5),
+    -> -- Westgate Warriors (TeamID 6)
+    -> ('Ryan', 'Palmer', '1998-10-06', 'Goalkeeper', 1, 6),
+    -> ('Nathan', 'Hoyt', '1997-06-13', 'Defender', 4, 6),
+    -> ('Adam', 'Curtis', '1999-05-19', 'Midfielder', 8, 6),
+    -> ('Isaac', 'Webb', '1996-02-24', 'Forward', 11, 6),
+    -> ('Dylan', 'Marsh', '2000-09-09', 'Midfielder', 7, 6);
+Query OK, 30 rows affected (0.01 sec)
+Records: 30  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Player Phones
+mysql> INSERT INTO PlayerPhone (PlayerID, PhoneNumber)
+    -> SELECT PlayerID, CONCAT('90000', LPAD(PlayerID,3,'0')) FROM Player;
+Query OK, 30 rows affected (0.01 sec)
+Records: 30  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Matches (15 fixtures)
+mysql> INSERT INTO Match_ (HomeTeamID, AwayTeamID, VenueID, RefereeID, MatchDate, MatchTime, HomeScore, AwayScore, Status) VALUES
+    -> (1, 2, 1, 1, '2026-02-01', '16:00:00', 2, 1, 'Completed'),
+    -> (3, 4, 3, 2, '2026-02-01', '18:00:00', 0, 0, 'Completed'),
+    -> (5, 6, 2, 3, '2026-02-02', '16:00:00', 3, 2, 'Completed'),
+    -> (2, 3, 2, 4, '2026-02-08', '16:00:00', 1, 1, 'Completed'),
+    -> (4, 5, 3, 1, '2026-02-08', '18:00:00', 0, 2, 'Completed'),
+    -> (6, 1, 1, 2, '2026-02-09', '16:00:00', 1, 3, 'Completed'),
+    -> (1, 3, 1, 3, '2026-02-15', '16:00:00', 2, 2, 'Completed'),
+    -> (2, 5, 2, 4, '2026-02-15', '18:00:00', 0, 1, 'Completed'),
+    -> (4, 6, 3, 1, '2026-02-16', '16:00:00', 2, 0, 'Completed'),
+    -> (3, 6, 3, 2, '2026-02-22', '16:00:00', 1, 1, 'Postponed'),
+    -> (5, 1, 2, 3, '2026-02-22', '18:00:00', 2, 2, 'Completed'),
+    -> (2, 4, 2, 4, '2026-02-23', '16:00:00', 3, 0, 'Completed'),
+    -> (1, 4, 1, 1, '2026-03-01', '16:00:00', 0, 0, 'Cancelled'),
+    -> (6, 2, 1, 2, '2026-03-01', '18:00:00', 1, 4, 'Completed'),
+    -> (3, 5, 3, 3, '2026-03-08', '16:00:00', NULL, NULL, 'Scheduled');
+Query OK, 15 rows affected (0.01 sec)
+Records: 15  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Player Match Stats (only for Completed matches, sample entries)
+mysql> INSERT INTO PlayerMatchStats (MatchID, PlayerID, Goals, Assists, YellowCards, RedCards, MinutesPlayed) VALUES
+    -> -- Match 1: Riverside FC 2 - 1 Northside United
+    -> (1, 4, 2, 0, 0, 0, 90), (1, 3, 0, 2, 0, 0, 90), (1, 9, 1, 0, 1, 0, 90),
+    -> 
+    -> -- Match 3: Summit City FC 3 - 2 Westgate Warriors
+    -> (3, 24, 3, 1, 0, 0, 90), (3, 29, 0, 0, 0, 0, 85), (3, 28, 2, 1, 1, 0, 90),
+    -> 
+    -> -- Match 4: Northside United 1 - 1 Eastwood Rangers
+    -> (4, 8, 1, 0, 0, 0, 90), (4, 14, 1, 1, 0, 0, 90),
+    -> 
+    -> -- Match 5: Harborview Athletic 0 - 2 Summit City FC
+    -> (5, 24, 1, 1, 0, 0, 90), (5, 23, 1, 0, 0, 0, 90),
+    -> 
+    -> -- Match 6: Westgate Warriors 1 - 3 Riverside FC
+    -> (6, 4, 2, 1, 0, 0, 90), (6, 3, 1, 0, 0, 0, 90), (6, 27, 1, 0, 1, 0, 90),
+    -> 
+    -> -- Match 7: Riverside FC 2 - 2 Eastwood Rangers
+    -> (7, 4, 1, 0, 0, 0, 90), (7, 3, 1, 1, 0, 0, 90),
+    -> (7, 13, 1, 0, 0, 0, 90), (7, 14, 1, 0, 0, 0, 90),
+    -> 
+    -> -- Match 8: Northside United 0 - 1 Summit City FC
+    -> (8, 23, 1, 0, 0, 0, 90),
+    -> 
+    -> -- Match 9: Harborview Athletic 2 - 0 Westgate Warriors
+    -> (9, 18, 1, 0, 0, 0, 90), (9, 19, 1, 1, 0, 0, 90),
+    -> 
+    -> -- Match 11: Summit City FC 2 - 2 Riverside FC
+    -> (11, 4, 2, 0, 0, 1, 90), (11, 3, 0, 2, 0, 0, 90),
+    -> (11, 23, 1, 1, 0, 0, 90), (11, 24, 1, 0, 0, 0, 90),
+    -> 
+    -> -- Match 12: Northside United 3 - 0 Harborview Athletic
+    -> (12, 8, 2, 0, 0, 0, 90), (12, 9, 1, 1, 0, 0, 90), (12, 10, 0, 2, 0, 0, 90),
+    -> 
+    -> -- Match 14: Westgate Warriors 1 - 4 Northside United
+    -> (14, 8, 3, 1, 0, 0, 90), (14, 9, 1, 0, 0, 0, 90), (14, 27, 1, 0, 1, 0, 90);
+Query OK, 30 rows affected (0.01 sec)
+Records: 30  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Team Sponsors
+mysql> INSERT INTO TeamSponsor (TeamID, SponsorName, Amount, PaymentMode, PaymentStatus, PaymentDate) VALUES
+    -> (1, 'BlueWave Motors', 25000.00, 'Bank Transfer', 'Paid', '2026-01-10'),
+    -> (2, 'NorthPeak Bank', 40000.00, 'Bank Transfer', 'Paid', '2026-01-12'),
+    -> (3, 'GreenLeaf Foods', 15000.00, 'UPI', 'Pending', '2026-01-15'),
+    -> (4, 'Harbor Insurance Co.', 30000.00, 'Cheque', 'Overdue', '2025-12-20'),
+    -> (5, 'Summit Realty Group', 22000.00, 'Cash', 'Paid', '2026-01-18'),
+    -> (6, 'Westgate Electronics', 18000.00, 'UPI', 'Pending', '2026-01-20');
+Query OK, 6 rows affected (0.01 sec)
+Records: 6  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- Feedback
+mysql> INSERT INTO Feedback (MatchID, FanName, Rating, Comments, FeedbackDate) VALUES
+    -> (1, 'Priya S.', 5, 'Great atmosphere and a well-fought win.', '2026-02-01'),
+    -> (1, 'Tom R.', 4, 'Good match, ref made a few odd calls.', '2026-02-01'),
+    -> (2, 'Sara K.', 3, 'Boring goalless draw.', '2026-02-01'),
+    -> (3, 'Vikram M.', 5, 'High-scoring thriller, loved it.', '2026-02-02'),
+    -> (4, 'Anita J.', 4, 'Solid game from both sides.', '2026-02-08'),
+    -> (6, 'George H.', 5, 'Riverside dominated the second half.', '2026-02-09'),
+    -> (7, 'Emma L.', 4, 'Close game right till the end.', '2026-02-15'),
+    -> (9, 'Noah P.', 5, 'Harborview looked really sharp today.', '2026-02-16'),
+    -> (11, 'Grace T.', 4, 'Entertaining draw with plenty of chances.', '2026-02-22'),
+    -> (12, 'Liam W.', 5, 'Northside were unstoppable.', '2026-02-23'),
+    -> (14, 'Olivia B.', 5, 'Best match of the season so far.', '2026-03-01'),
+    -> (14, 'Ryan C.', 2, 'Westgate defense was all over the place.', '2026-03-01');
+Query OK, 12 rows affected (0.01 sec)
+Records: 12  Duplicates: 0  Warnings: 0
+
+mysql> 
+mysql> -- ============================================================
+mysql> -- VIEW: Live league standings
+mysql> -- ============================================================
+mysql> 
+mysql> CREATE VIEW Standings AS
+    -> WITH team_matches AS (
+    ->     SELECT HomeTeamID AS TeamID, HomeScore AS GoalsFor, AwayScore AS GoalsAgainst,
+    ->            CASE WHEN HomeScore > AwayScore THEN 'W'
+    ->                 WHEN HomeScore < AwayScore THEN 'L'
+    ->                 ELSE 'D' END AS Result
+    ->     FROM Match_ WHERE Status = 'Completed'
+    ->     UNION ALL
+    ->     SELECT AwayTeamID AS TeamID, AwayScore AS GoalsFor, HomeScore AS GoalsAgainst,
+    ->            CASE WHEN AwayScore > HomeScore THEN 'W'
+    ->                 WHEN AwayScore < HomeScore THEN 'L'
+    ->                 ELSE 'D' END AS Result
+    ->     FROM Match_ WHERE Status = 'Completed'
+    -> )
+    -> SELECT
+    ->     t.TeamID,
+    ->     t.TeamName,
+    ->     COUNT(*) AS Played,
+    ->     SUM(CASE WHEN tm.Result = 'W' THEN 1 ELSE 0 END) AS Wins,
+    ->     SUM(CASE WHEN tm.Result = 'D' THEN 1 ELSE 0 END) AS Draws,
+    ->     SUM(CASE WHEN tm.Result = 'L' THEN 1 ELSE 0 END) AS Losses,
+    ->     SUM(tm.GoalsFor) AS GoalsFor,
+    ->     SUM(tm.GoalsAgainst) AS GoalsAgainst,
+    ->     SUM(tm.GoalsFor) - SUM(tm.GoalsAgainst) AS GoalDifference,
+    ->     SUM(CASE WHEN tm.Result = 'W' THEN 3 WHEN tm.Result = 'D' THEN 1 ELSE 0 END) AS Points
+    -> FROM team_matches tm
+    -> JOIN Team t ON t.TeamID = tm.TeamID
+    -> GROUP BY t.TeamID, t.TeamName
+    -> ORDER BY Points DESC, GoalDifference DESC;
+Query OK, 0 rows affected (0.01 sec)
+
+mysql> 
+mysql> -- ============================================================
+mysql> -- PRACTICE QUERIES
+mysql> -- ============================================================
+mysql> 
+mysql> -- 1. Full league standings table
+mysql> SELECT * FROM Standings;
++--------+---------------------+--------+------+-------+--------+----------+--------------+----------------+--------+
+| TeamID | TeamName            | Played | Wins | Draws | Losses | GoalsFor | GoalsAgainst | GoalDifference | Points |
++--------+---------------------+--------+------+-------+--------+----------+--------------+----------------+--------+
+|      5 | Summit City FC      |      4 |    3 |     1 |      0 |        8 |            4 |              4 |     10 |
+|      1 | Riverside FC        |      4 |    2 |     2 |      0 |        9 |            6 |              3 |      8 |
+|      2 | Northside United    |      5 |    2 |     1 |      2 |        9 |            5 |              4 |      7 |
+|      4 | Harborview Athletic |      4 |    1 |     1 |      2 |        2 |            5 |             -3 |      4 |
+|      3 | Eastwood Rangers    |      3 |    0 |     3 |      0 |        3 |            3 |              0 |      3 |
+|      6 | Westgate Warriors   |      4 |    0 |     0 |      4 |        4 |           12 |             -8 |      0 |
++--------+---------------------+--------+------+-------+--------+----------+--------------+----------------+--------+
+6 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 2. Top scorer across the season
+mysql> SELECT p.FirstName, p.LastName, SUM(pms.Goals) AS TotalGoals
+    -> FROM PlayerMatchStats pms
+    -> JOIN Player p ON p.PlayerID = pms.PlayerID
+    -> GROUP BY p.PlayerID
+    -> ORDER BY TotalGoals DESC
+    -> LIMIT 1;
++-----------+----------+------------+
+| FirstName | LastName | TotalGoals |
++-----------+----------+------------+
+| Ethan     | Hayes    |          7 |
++-----------+----------+------------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 3. Top 3 players by combined goals + assists
+mysql> SELECT p.FirstName, p.LastName, SUM(pms.Goals) AS Goals, SUM(pms.Assists) AS Assists,
+    ->        SUM(pms.Goals + pms.Assists) AS Contributions
+    -> FROM PlayerMatchStats pms
+    -> JOIN Player p ON p.PlayerID = pms.PlayerID
+    -> GROUP BY p.PlayerID
+    -> ORDER BY Contributions DESC
+    -> LIMIT 3;
++-----------+----------+-------+---------+---------------+
+| FirstName | LastName | Goals | Assists | Contributions |
++-----------+----------+-------+---------+---------------+
+| Ethan     | Hayes    |     7 |       1 |             8 |
+| Oliver    | Reed     |     2 |       5 |             7 |
+| Julian    | Hart     |     5 |       2 |             7 |
++-----------+----------+-------+---------+---------------+
+3 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 4. Team with the best win percentage
+mysql> SELECT TeamName, Wins, Played,
+    ->        ROUND(Wins * 100.0 / NULLIF(Played, 0), 2) AS WinPercentage
+    -> FROM Standings
+    -> ORDER BY WinPercentage DESC
+    -> LIMIT 1;
++----------------+------+--------+---------------+
+| TeamName       | Wins | Played | WinPercentage |
++----------------+------+--------+---------------+
+| Summit City FC |    3 |      4 |         75.00 |
++----------------+------+--------+---------------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 5. Head-to-head results between two specific teams (e.g. Riverside FC vs Northside United)
+mysql> SELECT MatchDate, ht.TeamName AS HomeTeam, m.HomeScore, at.TeamName AS AwayTeam, m.AwayScore
+    -> FROM Match_ m
+    -> JOIN Team ht ON ht.TeamID = m.HomeTeamID
+    -> JOIN Team at ON at.TeamID = m.AwayTeamID
+    -> WHERE (ht.TeamName = 'Riverside FC' AND at.TeamName = 'Northside United')
+    ->    OR (ht.TeamName = 'Northside United' AND at.TeamName = 'Riverside FC');
++------------+--------------+-----------+------------------+-----------+
+| MatchDate  | HomeTeam     | HomeScore | AwayTeam         | AwayScore |
++------------+--------------+-----------+------------------+-----------+
+| 2026-02-01 | Riverside FC |         2 | Northside United |         1 |
++------------+--------------+-----------+------------------+-----------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 6. Players who have never played a match
+mysql> SELECT p.FirstName, p.LastName
+    -> FROM Player p
+    -> LEFT JOIN PlayerMatchStats pms ON p.PlayerID = pms.PlayerID
+    -> WHERE pms.PlayerID IS NULL;
++-----------+----------+
+| FirstName | LastName |
++-----------+----------+
+| Liam      | Turner   |
+| Noah      | Bennett  |
+| Lucas     | Ford     |
+| Mason     | Ellis    |
+| Logan     | Hughes   |
+| William   | Sanders  |
+| Henry     | Price    |
+| Daniel    | Cole     |
+| Matthew   | Grant    |
+| Jack      | Fisher   |
+| David     | Hunt     |
+| Joseph    | Perry    |
+| Carter    | Wells    |
+| Gabriel   | Dean     |
+| Ryan      | Palmer   |
+| Dylan     | Marsh    |
++-----------+----------+
+16 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 7. Number of matches played by each team
+mysql> SELECT TeamName, Played FROM Standings ORDER BY Played DESC;
++---------------------+--------+
+| TeamName            | Played |
++---------------------+--------+
+| Northside United    |      5 |
+| Summit City FC      |      4 |
+| Riverside FC        |      4 |
+| Harborview Athletic |      4 |
+| Westgate Warriors   |      4 |
+| Eastwood Rangers    |      3 |
++---------------------+--------+
+6 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 8. Matches that ended 0-0
+mysql> SELECT MatchID, MatchDate, HomeTeamID, AwayTeamID
+    -> FROM Match_
+    -> WHERE HomeScore = 0 AND AwayScore = 0 AND Status = 'Completed';
++---------+------------+------------+------------+
+| MatchID | MatchDate  | HomeTeamID | AwayTeamID |
++---------+------------+------------+------------+
+|       2 | 2026-02-01 |          3 |          4 |
++---------+------------+------------+------------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 9. Average goals scored per match by venue
+mysql> SELECT v.VenueName, ROUND(AVG(m.HomeScore + m.AwayScore), 2) AS AvgGoalsPerMatch
+    -> FROM Match_ m
+    -> JOIN Venue v ON v.VenueID = m.VenueID
+    -> WHERE m.Status = 'Completed'
+    -> GROUP BY v.VenueID;
++-------------------------+------------------+
+| VenueName               | AvgGoalsPerMatch |
++-------------------------+------------------+
+| Riverside Grounds       |             4.00 |
+| Eastwood Community Park |             1.33 |
+| Central Stadium         |             3.00 |
++-------------------------+------------------+
+3 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 10. Referee who has officiated the most matches
+mysql> SELECT r.FirstName, r.LastName, COUNT(*) AS MatchesOfficiated
+    -> FROM Match_ m
+    -> JOIN Referee r ON r.RefereeID = m.RefereeID
+    -> GROUP BY r.RefereeID
+    -> ORDER BY MatchesOfficiated DESC
+    -> LIMIT 1;
++-----------+----------+-------------------+
+| FirstName | LastName | MatchesOfficiated |
++-----------+----------+-------------------+
+| Alan      | Brooks   |                 4 |
++-----------+----------+-------------------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 11. Players who scored more than the league-average number of goals
+mysql> SELECT p.FirstName, p.LastName, SUM(pms.Goals) AS TotalGoals
+    -> FROM PlayerMatchStats pms
+    -> JOIN Player p ON p.PlayerID = pms.PlayerID
+    -> GROUP BY p.PlayerID
+    -> HAVING TotalGoals > (
+    ->     SELECT AVG(GoalsPerPlayer) FROM (
+    ->         SELECT SUM(Goals) AS GoalsPerPlayer FROM PlayerMatchStats GROUP BY PlayerID
+    ->     ) AS sub
+    -> );
++-----------+----------+------------+
+| FirstName | LastName | TotalGoals |
++-----------+----------+------------+
+| Ethan     | Hayes    |          7 |
+| James     | Powell   |          3 |
+| Julian    | Hart     |          5 |
+| Elijah    | Foster   |          6 |
+| Wyatt     | Stone    |          3 |
++-----------+----------+------------+
+5 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 12. Team with the most players
+mysql> SELECT t.TeamName, COUNT(*) AS PlayerCount
+    -> FROM Player p
+    -> JOIN Team t ON t.TeamID = p.TeamID
+    -> GROUP BY t.TeamID
+    -> ORDER BY PlayerCount DESC
+    -> LIMIT 1;
++--------------+-------------+
+| TeamName     | PlayerCount |
++--------------+-------------+
+| Riverside FC |           5 |
++--------------+-------------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 13. Full stat line for a specific match (e.g. MatchID = 1)
+mysql> SELECT p.FirstName, p.LastName, pms.Goals, pms.Assists, pms.YellowCards, pms.RedCards, pms.MinutesPlayed
+    -> FROM PlayerMatchStats pms
+    -> JOIN Player p ON p.PlayerID = pms.PlayerID
+    -> WHERE pms.MatchID = 1;
++-----------+----------+-------+---------+-------------+----------+---------------+
+| FirstName | LastName | Goals | Assists | YellowCards | RedCards | MinutesPlayed |
++-----------+----------+-------+---------+-------------+----------+---------------+
+| Oliver    | Reed     |     0 |       2 |           0 |        0 |            90 |
+| Ethan     | Hayes    |     2 |       0 |           0 |        0 |            90 |
+| James     | Powell   |     1 |       0 |           1 |        0 |            90 |
++-----------+----------+-------+---------+-------------+----------+---------------+
+3 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 14. Total goals scored by each team across the season
+mysql> SELECT TeamName, GoalsFor FROM Standings ORDER BY GoalsFor DESC;
++---------------------+----------+
+| TeamName            | GoalsFor |
++---------------------+----------+
+| Riverside FC        |        9 |
+| Northside United    |        9 |
+| Summit City FC      |        8 |
+| Westgate Warriors   |        4 |
+| Eastwood Rangers    |        3 |
+| Harborview Athletic |        2 |
++---------------------+----------+
+6 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 15. Matches that received no fan feedback
+mysql> SELECT m.MatchID, m.MatchDate
+    -> FROM Match_ m
+    -> LEFT JOIN Feedback f ON m.MatchID = f.MatchID
+    -> WHERE f.FeedbackID IS NULL;
++---------+------------+
+| MatchID | MatchDate  |
++---------+------------+
+|       5 | 2026-02-08 |
+|       8 | 2026-02-15 |
+|      10 | 2026-02-22 |
+|      13 | 2026-03-01 |
+|      15 | 2026-03-08 |
++---------+------------+
+5 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 16. Fans who gave a 5-star rating
+mysql> SELECT FanName, MatchID, Comments FROM Feedback WHERE Rating = 5;
++-----------+---------+-----------------------------------------+
+| FanName   | MatchID | Comments                                |
++-----------+---------+-----------------------------------------+
+| Priya S.  |       1 | Great atmosphere and a well-fought win. |
+| Vikram M. |       3 | High-scoring thriller, loved it.        |
+| George H. |       6 | Riverside dominated the second half.    |
+| Noah P.   |       9 | Harborview looked really sharp today.   |
+| Liam W.   |      12 | Northside were unstoppable.             |
+| Olivia B. |      14 | Best match of the season so far.        |
++-----------+---------+-----------------------------------------+
+6 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 17. Player with the most disciplinary cards (yellow + red)
+mysql> SELECT p.FirstName, p.LastName, SUM(pms.YellowCards + pms.RedCards) AS TotalCards
+    -> FROM PlayerMatchStats pms
+    -> JOIN Player p ON p.PlayerID = pms.PlayerID
+    -> GROUP BY p.PlayerID
+    -> ORDER BY TotalCards DESC
+    -> LIMIT 1;
++-----------+----------+------------+
+| FirstName | LastName | TotalCards |
++-----------+----------+------------+
+| Nathan    | Hoyt     |          2 |
++-----------+----------+------------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 18. Matches that were postponed or cancelled
+mysql> SELECT MatchID, MatchDate, Status FROM Match_ WHERE Status IN ('Postponed', 'Cancelled');
++---------+------------+-----------+
+| MatchID | MatchDate  | Status    |
++---------+------------+-----------+
+|      10 | 2026-02-22 | Postponed |
+|      13 | 2026-03-01 | Cancelled |
++---------+------------+-----------+
+2 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 19. Teams and their total sponsorship income
+mysql> SELECT t.TeamName, SUM(ts.Amount) AS TotalSponsorship
+    -> FROM TeamSponsor ts
+    -> JOIN Team t ON t.TeamID = ts.TeamID
+    -> GROUP BY t.TeamID
+    -> ORDER BY TotalSponsorship DESC;
++---------------------+------------------+
+| TeamName            | TotalSponsorship |
++---------------------+------------------+
+| Northside United    |         40000.00 |
+| Harborview Athletic |         30000.00 |
+| Riverside FC        |         25000.00 |
+| Summit City FC      |         22000.00 |
+| Westgate Warriors   |         18000.00 |
+| Eastwood Rangers    |         15000.00 |
++---------------------+------------------+
+6 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 20. Sponsors with an overdue payment
+mysql> SELECT SponsorName, Amount, PaymentDate
+    -> FROM TeamSponsor
+    -> WHERE PaymentStatus = 'Overdue';
++----------------------+----------+-------------+
+| SponsorName          | Amount   | PaymentDate |
++----------------------+----------+-------------+
+| Harbor Insurance Co. | 30000.00 | 2025-12-20  |
++----------------------+----------+-------------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 21. Update a match status (example: mark a scheduled match as live)
+mysql> UPDATE Match_ SET Status = 'Live' WHERE MatchID = 15;
+Query OK, 1 row affected (0.00 sec)
+Rows matched: 1  Changed: 1  Warnings: 0
+
+mysql> 
+mysql> -- 22. Delete an invalid/duplicate feedback record (example)
+mysql> DELETE FROM Feedback WHERE FeedbackID = 12;
+Query OK, 1 row affected (0.00 sec)
+
+mysql> 
+mysql> -- 23. Rank teams by points using RANK()
+mysql> SELECT TeamName, Points, RANK() OVER (ORDER BY Points DESC) AS LeagueRank
+    -> FROM Standings;
++---------------------+--------+------------+
+| TeamName            | Points | LeagueRank |
++---------------------+--------+------------+
+| Summit City FC      |     10 |          1 |
+| Riverside FC        |      8 |          2 |
+| Northside United    |      7 |          3 |
+| Harborview Athletic |      4 |          4 |
+| Eastwood Rangers    |      3 |          5 |
+| Westgate Warriors   |      0 |          6 |
++---------------------+--------+------------+
+6 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 24. Rank teams by points using DENSE_RANK() (no gaps for ties)
+mysql> SELECT TeamName, Points, DENSE_RANK() OVER (ORDER BY Points DESC) AS LeagueRank
+    -> FROM Standings;
++---------------------+--------+------------+
+| TeamName            | Points | LeagueRank |
++---------------------+--------+------------+
+| Summit City FC      |     10 |          1 |
+| Riverside FC        |      8 |          2 |
+| Northside United    |      7 |          3 |
+| Harborview Athletic |      4 |          4 |
+| Eastwood Rangers    |      3 |          5 |
+| Westgate Warriors   |      0 |          6 |
++---------------------+--------+------------+
+6 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 25. Each team's match-by-match results, most recent first (for streak analysis)
+mysql> SELECT t.TeamName, m.MatchDate,
+    ->        CASE
+    ->            WHEN m.HomeTeamID = t.TeamID AND m.HomeScore > m.AwayScore THEN 'W'
+    ->            WHEN m.AwayTeamID = t.TeamID AND m.AwayScore > m.HomeScore THEN 'W'
+    ->            WHEN m.HomeScore = m.AwayScore THEN 'D'
+    ->            ELSE 'L'
+    ->        END AS Result
+    -> FROM Match_ m
+    -> JOIN Team t ON t.TeamID IN (m.HomeTeamID, m.AwayTeamID)
+    -> WHERE m.Status = 'Completed'
+    -> ORDER BY t.TeamName, m.MatchDate DESC;
++---------------------+------------+--------+
+| TeamName            | MatchDate  | Result |
++---------------------+------------+--------+
+| Eastwood Rangers    | 2026-02-15 | D      |
+| Eastwood Rangers    | 2026-02-08 | D      |
+| Eastwood Rangers    | 2026-02-01 | D      |
+| Harborview Athletic | 2026-02-23 | L      |
+| Harborview Athletic | 2026-02-16 | W      |
+| Harborview Athletic | 2026-02-08 | L      |
+| Harborview Athletic | 2026-02-01 | D      |
+| Northside United    | 2026-03-01 | W      |
+| Northside United    | 2026-02-23 | W      |
+| Northside United    | 2026-02-15 | L      |
+| Northside United    | 2026-02-08 | D      |
+| Northside United    | 2026-02-01 | L      |
+| Riverside FC        | 2026-02-22 | D      |
+| Riverside FC        | 2026-02-15 | D      |
+| Riverside FC        | 2026-02-09 | W      |
+| Riverside FC        | 2026-02-01 | W      |
+| Summit City FC      | 2026-02-22 | D      |
+| Summit City FC      | 2026-02-15 | W      |
+| Summit City FC      | 2026-02-08 | W      |
+| Summit City FC      | 2026-02-02 | W      |
+| Westgate Warriors   | 2026-03-01 | L      |
+| Westgate Warriors   | 2026-02-16 | L      |
+| Westgate Warriors   | 2026-02-09 | L      |
+| Westgate Warriors   | 2026-02-02 | L      |
++---------------------+------------+--------+
+24 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 26. Players ordered by minutes played (most used players)
+mysql> SELECT p.FirstName, p.LastName, SUM(pms.MinutesPlayed) AS TotalMinutes
+    -> FROM PlayerMatchStats pms
+    -> JOIN Player p ON p.PlayerID = pms.PlayerID
+    -> GROUP BY p.PlayerID
+    -> ORDER BY TotalMinutes DESC;
++-----------+----------+--------------+
+| FirstName | LastName | TotalMinutes |
++-----------+----------+--------------+
+| Oliver    | Reed     |          360 |
+| Ethan     | Hayes    |          360 |
+| James     | Powell   |          270 |
+| Julian    | Hart     |          270 |
+| Elijah    | Foster   |          270 |
+| Wyatt     | Stone    |          270 |
+| Michael   | Ross     |          180 |
+| Nathan    | Hoyt     |          180 |
+| Adam      | Curtis   |           90 |
+| Alexander | Bell     |           90 |
+| Owen      | Simmons  |           90 |
+| Samuel    | Warren   |           90 |
+| Benjamin  | Long     |           90 |
+| Isaac     | Webb     |           85 |
++-----------+----------+--------------+
+14 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 27. Teams that have not conceded a goal in any completed home match
+mysql> SELECT DISTINCT t.TeamName
+    -> FROM Team t
+    -> JOIN Match_ m ON m.HomeTeamID = t.TeamID
+    -> WHERE m.Status = 'Completed' AND m.AwayScore = 0
+    -> AND t.TeamID NOT IN (
+    ->     SELECT HomeTeamID FROM Match_ WHERE Status = 'Completed' AND AwayScore > 0
+    -> );
++------------------+
+| TeamName         |
++------------------+
+| Eastwood Rangers |
++------------------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 28. Highest attendance capacity venue used
+mysql> SELECT VenueName, Capacity FROM Venue ORDER BY Capacity DESC LIMIT 1;
++-----------------+----------+
+| VenueName       | Capacity |
++-----------------+----------+
+| Central Stadium |    15000 |
++-----------------+----------+
+1 row in set (0.00 sec)
+
+mysql> 
+mysql> -- 29. Count of matches per referee
+mysql> SELECT r.FirstName, r.LastName, COUNT(*) AS TotalMatches
+    -> FROM Match_ m
+    -> JOIN Referee r ON r.RefereeID = m.RefereeID
+    -> GROUP BY r.RefereeID;
++-----------+----------+--------------+
+| FirstName | LastName | TotalMatches |
++-----------+----------+--------------+
+| Alan      | Brooks   |            4 |
+| Sofia     | Martinez |            4 |
+| Ethan     | Wright   |            4 |
+| Nina      | Rao      |            3 |
++-----------+----------+--------------+
+4 rows in set (0.00 sec)
+
+mysql> 
+mysql> -- 30. Average fan rating per match
+mysql> SELECT m.MatchID, ROUND(AVG(f.Rating), 2) AS AvgRating
+    -> FROM Feedback f
+    -> JOIN Match_ m ON m.MatchID = f.MatchID
+    -> GROUP BY m.MatchID
+    -> ORDER BY AvgRating DESC;
++---------+-----------+
+| MatchID | AvgRating |
++---------+-----------+
+|       3 |      5.00 |
+|       6 |      5.00 |
+|       9 |      5.00 |
+|      12 |      5.00 |
+|      14 |      5.00 |
+|       1 |      4.50 |
+|       4 |      4.00 |
+|       7 |      4.00 |
+|      11 |      4.00 |
+|       2 |      3.00 |
++---------+-----------+
+10 rows in set (0.00 sec)
+
+mysql> Terminal close -- exit!
